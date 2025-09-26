@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ClinTox × 機械学習｜ロジスティック回帰・XGBoost・アンサンブル</title>
+  <meta name="description" content="ClinTox毒性分類でECFP特徴量を用いたロジスティック回帰・XGBoost・アンサンブル比較。PR-AUC重視。">
+  <style>
+:root{
+  --bg:#ffffff;--fg:#0f172a;--muted:#475569;--card:#f8fafc;--accent:#2563eb;--accent-2:#22c55e;--border:#e5e7eb;
+}
+@media (prefers-color-scheme: dark){
+  :root{--bg:#0b1022;--fg:#e5e7eb;--muted:#94a3b8;--card:#0f172a;--accent:#60a5fa;--accent-2:#34d399;--border:#1f2937;}
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Noto Sans JP","Hiragino Kaku Gothic ProN","Yu Gothic UI",Meiryo,sans-serif;line-height:1.6}
+.container{max-width:1100px;margin:0 auto;padding:24px}
+header{position:sticky;top:0;background:var(--bg);backdrop-filter:saturate(120%) blur(6px);border-bottom:1px solid var(--border);z-index:50}
+header .inner{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:12px 24px}
+.brand{font-weight:800;letter-spacing:.02em}
+.badge{display:inline-block;background:var(--card);border:1px solid var(--border);padding:2px 8px;border-radius:999px;font-size:12px}
+nav{display:flex;gap:8px;flex-wrap:wrap}
+nav a{color:var(--muted);text-decoration:none;padding:6px 10px;border-radius:8px}
+nav a:hover{background:var(--card);color:var(--fg)}
+.grid{display:grid;gap:16px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px}
+.hero{padding:28px 0 8px}
+.hero h1{font-size:clamp(22px,4vw,34px);margin:.2em 0}
+.btn{appearance:none;border:1px solid var(--border);background:var(--bg);color:var(--fg);border-radius:10px;padding:8px 12px;cursor:pointer;text-decoration:none}
+.btn:hover{background:var(--card)}
+.kpi{display:flex;gap:12px;flex-wrap:wrap}
+.kpi .item{flex:1 1 180px;border:1px solid var(--border);border-radius:14px;padding:12px;background:linear-gradient(180deg, rgba(37,99,235,.05), transparent)}
+.kpi .label{font-size:12px;color:var(--muted)}
+.kpi .value{font-weight:700;font-size:20px}
+.toc{position:sticky;top:64px;align-self:start;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:12px}
+.toc h3{margin:8px 8px 4px;font-size:14px;color:var(--muted)}
+.toc a{display:block;color:var(--muted);text-decoration:none;padding:6px 8px;border-radius:8px}
+.toc a:hover{background:rgba(37,99,235,.08);color:var(--fg)}
+h2{margin:.2em 0 .6em;font-size:clamp(18px,3.2vw,24px)}
+h3{margin:1.2em 0 .4em;font-size:16px}
+.callout{border-left:4px solid var(--accent);background:rgba(37,99,235,.05);padding:12px 14px;border-radius:8px}
+.small{font-size:12px;color:var(--muted)}
+footer{color:var(--muted);font-size:12px;margin-top:24px;padding:12px 0}
+.grid-3{display:grid;gap:16px}
+@media(min-width:900px){.grid-3{grid-template-columns:1fr 1fr 1fr}}
+.figure{border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.figure img{display:block;width:100%;height:auto}
+.figure figcaption{padding:6px 10px;font-size:12px;color:var(--muted);background:var(--bg)}
+.sep{height:1px;background:var(--border);margin:16px 0}
+.pill{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border);border-radius:999px;padding:4px 10px;background:var(--bg);font-size:12px}
+.flex{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+</style>
+</head>
+<body>
+  <header>
+    <div class="inner">
+      <div class="brand">ClinTox × ML <span class="badge">ECFP + Logistic / XGB / Ensemble</span></div>
+      <nav>
+        <a href="#overview">概要</a>
+        <a href="#data">データ</a>
+        <a href="#baseline">ベースライン</a>
+        <a href="#xgb">XGBoost</a>
+        <a href="#ensemble">アンサンブル</a>
+        <a href="#threshold">しきい値</a>
+        <a href="#repro">再現性</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero card" id="overview">
+      <h1>ClinTox による毒性分類</h1>
+      <p class="small">最終更新日 2025-09-26</p>
+      <p>ClinTox（MoleculeNet）を用い、SMILES→<strong>ECFP4（2048bit）</strong>を特徴量として、<strong>ロジスティック回帰</strong>・<strong>XGBoost</strong>・<strong>アンサンブル</strong>を比較。<strong>PR-AUC</strong>を主指標として評価しました。</p>
+      <div class="kpi">
+        <div class="item"><div class="label">陽性率</div><div class="value">約8%</div><div class="small">不均衡データ</div></div>
+        <div class="item"><div class="label">特徴量</div><div class="value">ECFP4 / 2048 bits</div></div>
+        <div class="item"><div class="label">指標</div><div class="value">PR-AUC</div><div class="small">average_precision</div></div>
+      </div>
+    </section>
+
+    <div class="grid" style="grid-template-columns:280px 1fr;gap:16px">
+      <aside class="toc">
+        <h3>目次</h3>
+        <a href="#overview">1. 概要</a>
+        <a href="#data">2. データと特徴量</a>
+        <a href="#baseline">3. ベースライン</a>
+        <a href="#xgb">4. XGBoost</a>
+        <a href="#ensemble">5. アンサンブル</a>
+        <a href="#threshold">6. しきい値設計</a>
+        <a href="#repro">7. 再現性</a>
+      </aside>
+
+      <div>
+        <section id="data" class="card">
+          <h2>2. データと特徴量</h2>
+          <ul>
+            <li>SMILES → RDKit → Morgan Fingerprint（ECFP4, 2048bits）</li>
+            <li>無効SMILESはゼロベクトルで処理</li>
+            <li>層化分割（train/test）・乱数固定（random_state=42）</li>
+          </ul>
+          <div class="flex">
+            <span class="pill">Python 3.10+</span>
+            <span class="pill">scikit-learn</span>
+            <span class="pill">xgboost</span>
+            <span class="pill">rdkit</span>
+          </div>
+        </section>
+
+        <section id="baseline" class="card">
+          <h2>3. ベースライン（ロジスティック回帰）</h2>
+          <div class="kpi">
+            <div class="item"><div class="label">ROC-AUC（Test）</div><div class="value">0.757</div></div>
+            <div class="item"><div class="label">PR-AUC（Test）</div><div class="value">0.329</div></div>
+          </div>
+          <details>
+            <summary>学習コード（抜粋）</summary>
+<pre class="code"><code>from sklearn.linear_model import LogisticRegression
+logreg = LogisticRegression(max_iter=5000, class_weight="balanced", random_state=42)
+logreg.fit(X_train, y_train)
+y_prob_lr = logreg.predict_proba(X_test)[:, 1]</code></pre>
+          </details>
+        </section>
+
+        <section id="xgb" class="card">
+          <h2>4. XGBoost（不均衡補正＋探索）</h2>
+          <p><code>scale_pos_weight = #neg/#pos</code> を導入し、RandomizedSearchCV（5-fold, scoring=AUPRC）で探索。</p>
+          <div class="kpi">
+            <div class="item"><div class="label">ベストCV PR-AUC</div><div class="value">0.380</div></div>
+            <div class="item"><div class="label">ROC-AUC（Test）</div><div class="value">0.829</div></div>
+            <div class="item"><div class="label">PR-AUC（Test）</div><div class="value">0.352</div></div>
+          </div>
+          <details>
+            <summary>主なハイパラ</summary>
+            <ul class="small">
+              <li>max_depth=3, min_child_weight=5</li>
+              <li>learning_rate=0.03, n_estimators=400</li>
+              <li>subsample=1.0, colsample_bytree=0.8</li>
+              <li>reg_lambda=0.5, reg_alpha=0.5</li>
+              <li>scale_pos_weight ≈ 17.1</li>
+            </ul>
+          </details>
+        </section>
+
+        <section id="ensemble" class="card">
+          <h2>5. アンサンブル（確率の加重平均）</h2>
+          <div class="kpi">
+            <div class="item"><div class="label">ROC-AUC（Test）</div><div class="value">0.817</div></div>
+            <div class="item"><div class="label">PR-AUC（Test）</div><div class="value">0.344</div></div>
+          </div>
+          <p>確率の単純平均または重み付き平均で統合。</p>
+<pre class="code"><code># y_prob_lr, y_prob_xgb は各モデルの確率
+y_prob_ens = 0.32 * y_prob_lr + 0.68 * y_prob_xgb  # 例：最適重み
+</code></pre>
+          <div class="callout small">この分割では XGB 単体（PR-AUC=0.352）が最良だが、重みを最適化したアンサンブルで 0.362 まで改善するケースも確認。</div>
+        </section>
+
+        <section id="threshold" class="card">
+          <h2>6. しきい値設計</h2>
+<pre class="code"><code>from sklearn.metrics import precision_recall_curve
+
+def best_threshold_by_metric(y_true, y_score, target="f1", beta=1.0,
+                             min_recall=None, min_precision=None):
+    p, r, thr = precision_recall_curve(y_true, y_score)
+    thr = np.r_[thr, 1.0]
+    best_t, best_s = 0.5, -np.inf
+    for pp, rr, tt in zip(p, r, thr):
+        if (min_recall is not None) and (rr &lt; min_recall): 
+            continue
+        if (min_precision is not None) and (pp &lt; min_precision): 
+            continue
+        if target == "f1":
+            s = (1 + beta**2) * (pp*rr) / (beta**2*pp + rr + 1e-12)
+        elif target == "precision":
+            s = pp
+        elif target == "recall":
+            s = rr
+        else:
+            raise ValueError
+        if s &gt; best_s:
+            best_t, best_s = tt, s
+    return best_t, best_s</code></pre>
+          <p class="small">要件に合わせて Precision/Recall の下限を課し、運用点を選定。</p>
+        </section>
+
+        <section id="repro" class="card">
+          <h2>7. 再現性・環境</h2>
+          <ul>
+            <li>乱数固定：random_state=42、層化分割</li>
+            <li>不均衡補正：scale_pos_weight = #neg/#pos</li>
+            <li>CV：StratifiedKFold(n_splits=5, shuffle=True, random_state=42)</li>
+            <li>評価：scoring="average_precision"（PR-AUC）</li>
+          </ul>
+        </section>
+
+        <section class="card">
+          <h2>付録：ROC/PR 図を出力するスニペット</h2>
+<pre class="code"><code>import matplotlib.pyplot as plt
+from sklearn.metrics import roc_curve, auc, precision_recall_curve, average_precision_score
+
+# y_test, y_prob_lr, y_prob_xgb, y_prob_ens を前提
+# ROC
+plt.figure()
+for name, y_score in {
+    'Logistic': y_prob_lr,
+    'XGBoost' : y_prob_xgb,
+    'Ensemble': y_prob_ens,
+}.items():
+    fpr, tpr, _ = roc_curve(y_test, y_score)
+    plt.plot(fpr, tpr, label=name)
+plt.plot([0,1],[0,1],'--',linewidth=1)
+plt.xlabel('FPR'); plt.ylabel('TPR'); plt.title('ROC'); plt.legend(); plt.tight_layout()
+plt.savefig('roc_curve.png', dpi=160); plt.close()
+
+# PR
+plt.figure()
+for name, y_score in {
+    'Logistic': y_prob_lr,
+    'XGBoost' : y_prob_xgb,
+    'Ensemble': y_prob_ens,
+}.items():
+    p, r, _ = precision_recall_curve(y_test, y_score)
+    ap = average_precision_score(y_test, y_score)
+    plt.plot(r, p, label=f"{name} (AP={ap:.3f})")
+plt.hlines((y_test==1).mean(), 0, 1, linestyles='--')
+plt.xlim(0,1); plt.ylim(0,1)
+plt.xlabel('Recall'); plt.ylabel('Precision'); plt.title('PR')
+plt.legend(); plt.tight_layout(); plt.savefig('pr_curve.png', dpi=160); plt.close()</code></pre>
+        </section>
+      </div>
+    </div>
+
+    <footer><div class="sep"></div><p>© 2025 ClinTox × ML. Single-file HTML.</p></footer>
+  </main>
+</body>
+</html>

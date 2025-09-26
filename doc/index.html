@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ポートフォリオ｜Chem × ML</title>
+  <meta name="description" content="Python × 機械学習 × 化学・材料データのポートフォリオ">
+  <style>
+:root{
+  --bg:#ffffff;--fg:#0f172a;--muted:#475569;--card:#f8fafc;--accent:#2563eb;--accent-2:#22c55e;--border:#e5e7eb;
+}
+@media (prefers-color-scheme: dark){
+  :root{--bg:#0b1022;--fg:#e5e7eb;--muted:#94a3b8;--card:#0f172a;--accent:#60a5fa;--accent-2:#34d399;--border:#1f2937;}
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Noto Sans JP","Hiragino Kaku Gothic ProN","Yu Gothic UI",Meiryo,sans-serif;line-height:1.6}
+.container{max-width:1100px;margin:0 auto;padding:24px}
+header{position:sticky;top:0;background:var(--bg);backdrop-filter:saturate(120%) blur(6px);border-bottom:1px solid var(--border);z-index:50}
+header .inner{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:12px 24px}
+.brand{font-weight:800;letter-spacing:.02em}
+.badge{display:inline-block;background:var(--card);border:1px solid var(--border);padding:2px 8px;border-radius:999px;font-size:12px}
+nav{display:flex;gap:8px;flex-wrap:wrap}
+nav a{color:var(--muted);text-decoration:none;padding:6px 10px;border-radius:8px}
+nav a:hover{background:var(--card);color:var(--fg)}
+.grid{display:grid;gap:16px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px}
+.hero{padding:28px 0 8px}
+.hero h1{font-size:clamp(22px,4vw,34px);margin:.2em 0}
+.btn{appearance:none;border:1px solid var(--border);background:var(--bg);color:var(--fg);border-radius:10px;padding:8px 12px;cursor:pointer;text-decoration:none}
+.btn:hover{background:var(--card)}
+.kpi{display:flex;gap:12px;flex-wrap:wrap}
+.kpi .item{flex:1 1 180px;border:1px solid var(--border);border-radius:14px;padding:12px;background:linear-gradient(180deg, rgba(37,99,235,.05), transparent)}
+.kpi .label{font-size:12px;color:var(--muted)}
+.kpi .value{font-weight:700;font-size:20px}
+.toc{position:sticky;top:64px;align-self:start;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:12px}
+.toc h3{margin:8px 8px 4px;font-size:14px;color:var(--muted)}
+.toc a{display:block;color:var(--muted);text-decoration:none;padding:6px 8px;border-radius:8px}
+.toc a:hover{background:rgba(37,99,235,.08);color:var(--fg)}
+h2{margin:.2em 0 .6em;font-size:clamp(18px,3.2vw,24px)}
+h3{margin:1.2em 0 .4em;font-size:16px}
+.callout{border-left:4px solid var(--accent);background:rgba(37,99,235,.05);padding:12px 14px;border-radius:8px}
+.small{font-size:12px;color:var(--muted)}
+footer{color:var(--muted);font-size:12px;margin-top:24px;padding:12px 0}
+.grid-3{display:grid;gap:16px}
+@media(min-width:900px){.grid-3{grid-template-columns:1fr 1fr 1fr}}
+.figure{border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.figure img{display:block;width:100%;height:auto}
+.figure figcaption{padding:6px 10px;font-size:12px;color:var(--muted);background:var(--bg)}
+.sep{height:1px;background:var(--border);margin:16px 0}
+.pill{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border);border-radius:999px;padding:4px 10px;background:var(--bg);font-size:12px}
+.flex{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+</style>
+</head>
+<body>
+<header>
+  <div class="inner">
+    <div class="brand">ポートフォリオ <span class="badge">Chem × Machine Learning</span></div>
+    <nav>
+      <a href="#projects">成果一覧</a>
+      <a href="#about">プロフィール</a>
+      <a href="#contact">連絡先</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+  <section class="hero card">
+    <h1>成果紹介（Chem × Machine Learning）</h1>
+    <p class="small">最終更新日 2025-09-26</p>
+    <p>化学・材料データを対象に、機械学習・データサイエンスの実装例をまとめています。各成果は再現性（環境・手順）に配慮し、単一HTMLで掲載しています。</p>
+    <div class="flex">
+      <a class="btn" href="#projects">成果一覧へ</a>
+      <a class="btn" href="project_template.html">ページ雛形</a>
+    </div>
+  </section>
+
+  <section id="projects" class="card">
+    <h2>成果一覧</h2>
+    <div class="grid-3">
+      <article class="card">
+        <h3>毒性分類（ClinTox × ECFP）</h3>
+        <p class="small">RDKitで分子記述子を作成し、ロジスティック回帰/XGBoost/アンサンブルを比較。PR-AUCを主指標。</p>
+        <a class="btn" href="clintox_xgb_cleaned.html">ページを開く</a>
+      </article>
+      <article class="card">
+        <h3>結晶構造解析（pymatgen）</h3>
+        <p class="small">CIF読み込み、格子定数・組成抽出、可視化。NotebookからHTMLへの発展例。</p>
+        <a class="btn" href="#">（準備中）</a>
+      </article>
+      <article class="card">
+        <h3>Scikit-learn基礎</h3>
+        <p class="small">Iris/California Housingの分類・回帰ベースライン。可視化と再現手順を整備。</p>
+        <a class="btn" href="#">（準備中）</a>
+      </article>
+    </div>
+  </section>
+
+  <section id="about" class="card">
+    <h2>プロフィール</h2>
+    <p>有機化学バックグラウンドを持ち、Chem × ML × Materials Informatics の実務応用に注力しています。Notebook主導の探索から、再現性の高い単一HTMLへまとめ上げる運用を採用しています。</p>
+  </section>
+
+  <section id="contact" class="card">
+    <h2>連絡先</h2>
+    <p>GitHub: <a href="#">（あなたのアカウント）</a></p>
+    <p>Mail: （公開する場合のみ）</p>
+  </section>
+
+  <footer class="container"><div class="sep"></div><p>© 2025 Portfolio.</p></footer>
+</main>
+</body>
+</html>
